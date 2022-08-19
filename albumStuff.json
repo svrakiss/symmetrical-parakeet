@@ -1,0 +1,37 @@
+{
+    "album": {
+        "id": "AKkas_mxlJsKUpf7brw6ptTxE4HtY3o5rKDnJvAQNf-4tJg6q-PU0scWPNJtFdQeM-64pzpJbwDQ"
+    },
+    "filepath": "Anime\\Bunny Rie.png",
+    "create": {
+        "album": {
+            "isWriteable": true,
+            "title": "Comics",
+            "shareInfo": {
+                "isJoinable": true,
+                "sharedAlbumOptions": {
+                    "isCollaborative": true,
+                    "isCommentable": true
+                },
+                "isOwned": true,
+                "isJoined": true
+            }
+        }
+    },
+    "albums": [
+        {
+            "album": {
+                "id": "AKkas_mxlJsKUpf7brw6ptTxE4HtY3o5rKDnJvAQNf-4tJg6q-PU0scWPNJtFdQeM-64pzpJbwDQ",
+                "title": "Anime"
+            }
+        },
+        {
+            "album": {
+                "id": "AGRChL3cNkcZyVgaOycP6NmfYFPhg9KsiMlUZ7KZBYWKyOsRmOvhKYGtLqm93hnQplzglt3XquT_",
+                "title": "Comics",
+                "productUrl": "https://photos.google.com/lr/album/AGRChL3cNkcZyVgaOycP6NmfYFPhg9KsiMlUZ7KZBYWKyOsRmOvhKYGtLqm93hnQplzglt3XquT_",
+                "isWriteable": true
+            }
+        }
+    ]
+}

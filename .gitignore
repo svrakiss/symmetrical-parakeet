@@ -1,0 +1,11 @@
+# created by virtualenv automatically
+*.pyc
+*.gif
+*.png
+*.jpg
+*.jpeg
+*.pickle
+*.yml
+*.dockerfile
+/Lib/*
+*.laccdb
