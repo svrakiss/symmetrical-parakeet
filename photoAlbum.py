@@ -211,3 +211,37 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
     
     with open(results,'w') as jsonFile:
         json.dump(results_json,jsonFile,indent=4)
+
+
+def split_album(names, results=RESULTS_FILE):
+    f = open(results)
+    results_json = json.load(f)
+    output = {}
+    for p in names:
+        indices = [x for x in range(len(names[p])) if names[p][0][x] in results_json]
+        ind_array=[]
+        output[p]={'indices':indices}
+        for q in range(len(indices)):
+            if (indices[q]==0):  # q == 0 right now btw
+                if(len(indices)>1):
+                    if(indices[q+1]!=1):
+                        ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][0][0]]['mediaItem']['id'], 'slice': slice(1,indices[q+1])});  # normally would be slice(q+1, indices[q+1])
+                    continue;
+                else:
+                    if len(names[p]==1):
+                        break
+                    ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][0][0]]['mediaItem']['id'], 'slice': slice(1,len(names[p]))});  # error if len(names[p]) == 1
+                    continue;
+            elif q==0:
+                # pick up what's behind you
+                ind_array.append({'cmd':'FIRST_IN_ALBUM','slice': slice(0,indices[q])});
+            if q==len(indices)-1:
+                # last index in the list
+                # could also be last index in the names list too
+                if(indices[q]==len(names[p])-1):
+                    break
+                ind_array.append({'cmd':'LAST_IN_ALBUM','slice':slice(indices[q]+1,len(names[p]))})
+            else:
+                ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][0][indices[q]]]['mediaItem']['id'], 'slice': slice(indices[q]+1,indices[q+1])});
+        output[p]['ind_array']=ind_array
+    return output
