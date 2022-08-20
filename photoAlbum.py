@@ -140,7 +140,7 @@ def make_album(service, albumName, request_body=r):
 
 
 def validate_names(filename=EXCEL_NAMES):
-
+# TODO check for duplicates
     albumDict = pd.read_excel(filename,sheet_name=None,header=None) # All Sheets in a dict sheetname:dataframe
     for x in albumDict:
         for i in range(len(albumDict[x])): # doesn't make any assumptions about column name. just iterates over the first column
@@ -150,6 +150,7 @@ def validate_names(filename=EXCEL_NAMES):
     return albumDict
 
 def get_pics(albumDict, token=token):
+# TODO account for same name in different albums (don't upload more than once)
     resultArray={}
     for x in albumDict:
         resultArray[x] = []
@@ -212,7 +213,7 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
     with open(results,'w') as jsonFile:
         json.dump(results_json,jsonFile,indent=4)
 
-
+# yes, order is very important. 
 def split_album(names, results=RESULTS_FILE):
     f = open(results)
     results_json = json.load(f)
@@ -245,3 +246,21 @@ def split_album(names, results=RESULTS_FILE):
                 ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][0][indices[q]]]['mediaItem']['id'], 'slice': slice(indices[q]+1,indices[q+1])});
         output[p]['ind_array']=ind_array
     return output
+
+def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dict], token=token):
+    # this first version is for assuming all of the items are unrelated: i.e. names chars can be in multiple albums and they
+    # will be uploaded more than once.
+    # decided to implement this in get_pics()
+    # so this shouldn't be a problem anymore
+
+    # get_pics() doesn't have to be called on individual slices
+    # it is usually called on the entire album Dict
+
+    tokens = get_pics({x:names[x].drop(sets[x]['indices']) for x in names},token)  # just looking at the rows that are new
+
+    # since these are guaranteed to be unique, you can upload them all
+
+    # TODO figure out dispatch and change the method name to get_pics
+
+    return tokens
+
