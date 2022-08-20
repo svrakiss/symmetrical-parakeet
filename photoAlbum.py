@@ -140,14 +140,14 @@ def make_album(service, albumName, request_body=r):
 
 
 def validate_names(filename=EXCEL_NAMES):
-# TODO check for duplicates
+# TODO test for duplicate removal
     albumDict = pd.read_excel(filename,sheet_name=None,header=None) # All Sheets in a dict sheetname:dataframe
     for x in albumDict:
         for i in range(len(albumDict[x])): # doesn't make any assumptions about column name. just iterates over the first column
             # easily replaced with albumDict[x][albumDict[x].columns[0]] which should return a list
             if crsr.execute("SELECT 1 FROM Images WHERE Characters=?",albumDict[x].iat[i,0]).fetchone()[0] !=1:
                 print(albumDict[x].iat[i,0])
-    return albumDict
+    return {x:albumDict[x].drop_duplicates(subset=albumDict[x].columns[0]) for x in albumDict}
 
 def get_pics(albumDict, token=token):
 # TODO account for same name in different albums (don't upload more than once)
