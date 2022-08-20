@@ -150,16 +150,16 @@ def validate_names(filename=EXCEL_NAMES):
     return {x:albumDict[x].drop_duplicates(subset=albumDict[x].columns[0]) for x in albumDict}
 
 def get_pics(albumDict, token=token):
-# TODO account for same name in different albums (don't upload more than once)
+# TODO test for same name in different albums (don't upload more than once)
     resultArray={}
     for x in albumDict:
-        resultArray[x] = []
         for i in range(len(albumDict[x])):
+            if albumDict[x].iat[i,0] in resultArray:
+                continue;
             url=crsr.execute("SELECT Pics FROM Images WHERE Characters=?",albumDict[x].iat[i,0]).fetchone()[0]
-            # resultArray.append(url) 
             upload_token = uploadDownload(url.strip('#'),token=token.token,name = clean_char_name(albumDict[x].iat[i,0]))
-            resultArray[x].append(upload_token.decode('utf-8'))
-    return resultArray
+            resultArray[albumDict[x].iat[i,0]]=upload_token.decode('utf-8')
+    return {x: [resultArray[y] for y in albumDict[x][albumDict[x].columns[0]] ] for x in albumDict}
 
 
 def grab_upload_tokens(service, names:dict[int | str : pd.DataFrame], token=token):
