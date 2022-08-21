@@ -1,4 +1,5 @@
 from email.mime import image
+import itertools
 import re
 import sys
 import json
@@ -198,7 +199,7 @@ def final_step(service, names,tokens,token=token):
     for x in names:
         res=make_album(service,x)
         # newDict[x]=res.get('id')
-        result =make_items(service=service,tokens=np.array(tokens[x]),albumId=res.get('id'), descriptions= np.array(names[x][0]))  # also assumes the column name is 0 ( guaranteed because of the way things are read from the file)
+        result =make_items(service=service,tokens=np.array(tokens[x]),albumId=res.get('id'), descriptions= np.array(names[x][names[x].columns[0]]))  # also assumes the column name is 0 ( guaranteed because of the way things are read from the file)
         newDict[x]= result
     return newDict
 
@@ -220,19 +221,25 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
     f = open(results)
     results_json = json.load(f)
     newDict = {}
+    funk = lambda x: x['newMediaItemResults']
+    # funk2 = lambda x: unpack(x, lambda y: y['mediaItem']['id'])
+    # use unpack(names[][], lambda x: funk2(funk(x))  ) to get the ids 
+    flatten = itertools.chain.from_iterable
     for x in names:
-        results_json.update(dict(zip(names[x][0], np.concatenate([ q['newMediaItemResults'] for q in upload_response[x]] ).flat)))
+        col_1 = names[x].columns[0]
+        results_json.update(dict(zip(names[x][col_1],  flatten(unpack(names[x][col_1],funk))  )))
     
     with open(results,'w') as jsonFile:
         json.dump(results_json,jsonFile,indent=4)
 
 # yes, order is very important. 
 def split_album(names, results=RESULTS_FILE):
+    # TODO remove assumptions that first column is named '0'
     f = open(results)
     results_json = json.load(f)
     output = {}
     for p in names:
-        indices = [x for x in range(len(names[p])) if names[p][0][x] in results_json]
+        indices = [x for x in range(len(names[p])) if names[p][names[p].columns[0]][x] in results_json]
         ind_array=[]
         output[p]={'indices':indices}
         for q in range(len(indices)):
@@ -256,7 +263,7 @@ def split_album(names, results=RESULTS_FILE):
                     break
                 ind_array.append({'cmd':'LAST_IN_ALBUM','slice':slice(indices[q]+1,len(names[p]))})
             else:
-                ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][0][indices[q]]]['mediaItem']['id'], 'slice': slice(indices[q]+1,indices[q+1])});
+                ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][names[p].columns[0]][indices[q]]]['mediaItem']['id'], 'slice': slice(indices[q]+1,indices[q+1])});
         output[p]['ind_array']=ind_array
     return output
 
@@ -279,8 +286,8 @@ def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dic
 
 def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_FILE):
     result = {}
-    f = open(RESULTS_FILE)
-    results = json.load(f)
+    f = open(results)
+    results = json.load(f)  # should probably change the name of this 
     for x in names:
         res=make_album(service, x)
         if len(sets[x]['indices'])!=0:
