@@ -116,7 +116,7 @@ def look_at_all(folder_name,token):
     return result
 
 
-def make_items(service,tokens, albumId,descriptions=None):
+def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=None):
     # if(len(tokens)>50):
     tokens_list=np.array_split(tokens,math.ceil(len(tokens)/CHUNK_SIZE));
     if(descriptions is not None):
@@ -130,6 +130,16 @@ def make_items(service,tokens, albumId,descriptions=None):
 
         request_body = {'newMediaItems':new_media_items}
         request_body['albumId']=albumId
+        if(cmd is not None):
+            if relative_id is not None:
+                request_body['albumPosition'] = {
+                    'position':cmd,
+                    'relativeMediaItemId':relative_id
+                }
+            else:
+                request_body['albumPosition']={
+                    'position':cmd
+                }
         upload_response.append(service.mediaItems().batchCreate(body = request_body).execute())
     return upload_response
 
@@ -264,3 +274,22 @@ def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dic
 
     return tokens
 
+def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_FILE):
+    result = {}
+    f = open(RESULTS_FILE)
+    results = json.load(f)
+    for x in names:
+        res=make_album(service, x)
+        if len(sets[x]['indices'])!=0:
+            body={
+                "mediaItemIds":[results[q]['mediaItem']['id'] for q in names[x][names[x].columns[0]][sets[x]['indices']]], # assumes the column name is 0
+            }
+            service.albums().batchAddMediaItems(albumId=res.get('id'), body=body).execute()
+        else: # len(ind_array) == 0 for the wrong reason
+            result[x] = make_items(service,tokens[x], res.get('id'),names[x][names[x].columns[0]])
+            continue;
+        tokens_i_need = dict(zip(names[x][names[x].columns[0]].drop(sets[x]['indices']),tokens[x]))
+        result[x] = []
+        for ind in sets[x]['ind_array']:
+            result[x].append(make_items(service,[tokens_i_need[y] for y in names[x][names[x].columns[0]][ind['slice']]],res.get('id'),names[x][names[x].columns[0]][ind['slice']], ind['cmd'],ind.get('id')))
+    return result
