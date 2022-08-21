@@ -116,7 +116,7 @@ def look_at_all(folder_name,token):
     return result
 
 
-def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=None):
+def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=None)->list[dict[str:list]]:
     # if(len(tokens)>50):
     tokens_list=np.array_split(tokens,math.ceil(len(tokens)/CHUNK_SIZE));
     if(descriptions is not None):
@@ -131,12 +131,15 @@ def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=N
         request_body = {'newMediaItems':new_media_items}
         request_body['albumId']=albumId
         if(cmd is not None):
+            # this will allow you to input incorrect syntax
+            # cmd should be AFTER MEDIA ITEM
             if relative_id is not None:
                 request_body['albumPosition'] = {
                     'position':cmd,
                     'relativeMediaItemId':relative_id
                 }
             else:
+                # cmd should be 
                 request_body['albumPosition']={
                     'position':cmd
                 }
@@ -288,8 +291,23 @@ def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_
         else: # len(ind_array) == 0 for the wrong reason
             result[x] = make_items(service,tokens[x], res.get('id'),names[x][names[x].columns[0]])
             continue;
-        tokens_i_need = dict(zip(names[x][names[x].columns[0]].drop(sets[x]['indices']),tokens[x]))
+        tokens_i_need = dict(zip(names[x][names[x].columns[0]].drop(sets[x]['indices']),tokens[x]))   # this is undesirable, there should be a way to do this without reconstruction
         result[x] = []
         for ind in sets[x]['ind_array']:
-            result[x].append(make_items(service,[tokens_i_need[y] for y in names[x][names[x].columns[0]][ind['slice']]],res.get('id'),names[x][names[x].columns[0]][ind['slice']], ind['cmd'],ind.get('id')))
+            result[x].append(make_items(service,[tokens_i_need[y] for y in names[x][names[x].columns[0]][ind['slice']]],res.get('id'),names[x][names[x].columns[0]][ind['slice']], ind['cmd'], ind.get('id')))
+        # need to fix the format of result [x]  before returning
+        # currently it is [ [ dict ], [dict] ]   it should be 
+        # [ dict]
     return result
+
+
+def unpack(arg, func):
+    # the base case is the dict in the list of dict 
+    if isinstance(arg, dict):
+        yield func(arg)
+    # isinstance(arg, list) == True
+    else:
+        for x in arg:
+            yield from unpack(x,func)
+            # result needs to be an iterable, so isinstance(func(arg),iterable) == True when isinstance(arg, dict) == True
+            # i.e. the function passed in has to return an iterable when used on the base case 
