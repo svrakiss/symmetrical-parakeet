@@ -14,7 +14,7 @@ import numpy as np
 import glob
 import math
 from multipledispatch import dispatch
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 import re
 from imageGal import *
 import mimetypes
@@ -218,6 +218,7 @@ def updateResults(names, service=service, token=token, results=RESULTS_FILE):
     return result 
 
 def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[str : list], results=RESULTS_FILE):
+    # remove names not being added before you call this method
     f = open(results)
     results_json = json.load(f)
     newDict = {}
@@ -227,7 +228,9 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
     flatten = itertools.chain.from_iterable
     for x in names:
         col_1 = names[x].columns[0]
-        results_json.update(dict(zip(names[x][col_1],  flatten(unpack(names[x][col_1],funk))  )))
+        if(len(upload_response[x])==0):
+            continue;
+        results_json.update(dict(zip(names[x][col_1],  flatten(unpack(upload_response[x],funk))  )))
     
     with open(results,'w') as jsonFile:
         json.dump(results_json,jsonFile,indent=4)
@@ -302,13 +305,12 @@ def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_
         result[x] = []
         for ind in sets[x]['ind_array']:
             result[x].append(make_items(service,[tokens_i_need[y] for y in names[x][names[x].columns[0]][ind['slice']]],res.get('id'),names[x][names[x].columns[0]][ind['slice']], ind['cmd'], ind.get('id')))
-        # need to fix the format of result [x]  before returning
-        # currently it is [ [ dict ], [dict] ]   it should be 
-        # [ dict]
+        # the format of result [x]  before returning
+        # currently it is [ [ dict ], [dict] ] or [dict]
     return result
 
 
-def unpack(arg, func):
+def unpack(arg:Iterable, func):
     # the base case is the dict in the list of dict 
     if isinstance(arg, dict):
         yield func(arg)
@@ -316,5 +318,4 @@ def unpack(arg, func):
     else:
         for x in arg:
             yield from unpack(x,func)
-            # result needs to be an iterable, so isinstance(func(arg),iterable) == True when isinstance(arg, dict) == True
-            # i.e. the function passed in has to return an iterable when used on the base case 
+            # result needs to be an iterable ( you get this for free since generators are iterable)
