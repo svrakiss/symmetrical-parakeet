@@ -266,6 +266,8 @@ def split_album(names, results=RESULTS_FILE):
                     break
                 ind_array.append({'cmd':'LAST_IN_ALBUM','slice':slice(indices[q]+1,len(names[p]))})
             else:
+                if indices[q]+1==indices[q+1]:
+                    continue;
                 ind_array.append({'cmd':'AFTER_MEDIA_ITEM', 'id': results_json[names[p][names[p].columns[0]][indices[q]]]['mediaItem']['id'], 'slice': slice(indices[q]+1,indices[q+1])});
         output[p]['ind_array']=ind_array
     return output
