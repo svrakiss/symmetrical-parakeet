@@ -89,13 +89,17 @@ SCOPES = ['https://www.googleapis.com/auth/photoslibrary.sharing','https://www.g
 API_SERVICE_NAME = 'photoslibrary'
 API_VERSION = 'v1'
 CHUNK_SIZE = 50
-service = Create_Service(CLIENTS_SECRETS_FILE,API_SERVICE_NAME,API_VERSION,SCOPES)
+
 
 EXCEL_NAMES = r"C:\Users\danny\OneDrive\Documents\code\Koikatsu Mr D\animeFinalRound.xlsx"
 RESULTS_FILE= r"C:\Users\danny\OneDrive\Documents\code\Koikatsu Mr D\pastResults.json"
 
-def pickle_load_token(pickle_name='token_photoslibrary_v1.pickle', service=service):
-    # if(os.path.exists(pickle_name)):
+def pickle_load_token(pickle_name='token_photoslibrary_v1.pickle'):
+    if(os.path.exists(pickle_name)):
+        token = pickle.load(open(pickle_name, 'rb'))
+        if token.expired:
+            os.remove(pickle_name)
+    service = Create_Service(CLIENTS_SECRETS_FILE,API_SERVICE_NAME,API_VERSION,SCOPES) # throws an error if token file  is expired
     token = pickle.load(open(pickle_name, 'rb'))
     while(token.expired):
         os.remove(pickle_name)
@@ -159,7 +163,7 @@ def validate_names(filename=EXCEL_NAMES):
     for x in albumDict:
         for i in range(len(albumDict[x])): # doesn't make any assumptions about column name. just iterates over the first column
             # easily replaced with albumDict[x][albumDict[x].columns[0]] which should return a list
-            if crsr.execute("SELECT 1 FROM Images WHERE Characters=?",albumDict[x].iat[i,0]).fetchone()[0] !=1:
+            if crsr.execute("SELECT 1 FROM Images WHERE Characters=?",albumDict[x].iat[i,0]).fetchone() is None:
                 print(albumDict[x].iat[i,0])
     return {x:albumDict[x].drop_duplicates(subset=albumDict[x].columns[0]) for x in albumDict}
 
