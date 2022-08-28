@@ -10,7 +10,7 @@
             "shareInfo": {
                 "isJoinable": true,
                 "sharedAlbumOptions": {
-                    "isCollaborative": true,
+                    "isCollaborative": false,
                     "isCommentable": true
                 },
                 "isOwned": true,
