@@ -240,7 +240,7 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
         json.dump(results_json,jsonFile,indent=4)
 
 # yes, order is very important. 
-def split_album(names, results=RESULTS_FILE):
+def split_album(names, results=RESULTS_FILE)->dict:
     # TODO remove assumptions that first column is named '0'
     f = open(results)
     results_json = json.load(f)
@@ -295,10 +295,12 @@ def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dic
 
 def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_FILE):
     result = {}
+    albumIds = []
     f = open(results)
     results = json.load(f)  # should probably change the name of this 
     for x in names:
         res=make_album(service, x)
+        albumIds.append(res.get('id'))
         if len(sets[x]['indices'])!=0:
             body={
                 "mediaItemIds":[results[q]['mediaItem']['id'] for q in names[x][names[x].columns[0]][sets[x]['indices']]], # assumes the column name is 0
@@ -313,7 +315,7 @@ def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_
             result[x].append(make_items(service,[tokens_i_need[y] for y in names[x][names[x].columns[0]][ind['slice']]],res.get('id'),names[x][names[x].columns[0]][ind['slice']], ind['cmd'], ind.get('id')))
         # the format of result [x]  before returning
         # currently it is [ [ dict ], [dict] ] or [dict]
-    return result
+    return result, albumIds
 
 
 def unpack(arg:Iterable, func):
@@ -325,3 +327,44 @@ def unpack(arg:Iterable, func):
         for x in arg:
             yield from unpack(x,func)
             # result needs to be an iterable ( you get this for free since generators are iterable)
+
+
+class your():
+    albumDict:dict
+    sets:dict
+    tokens:dict
+    service:Any
+    token:Any
+    albumIds:list
+    result:Any
+    other_result:Any
+    def __init__(self, excelFile):
+        self.albumDict = validate_names(excelFile)
+        self.sets = split_album(self.albumDict)
+        self.service=service
+    def make(self):
+        self.tokens = new_items(self.albumDict,self.sets)
+        if all(len(self.sets[x]['ind_array'])==0 for x in self.sets):
+            print("everything is new")
+        return make_both(self.albumDict,self.sets,self.tokens)
+    def update(self,results):
+        real_dict = { x:self.albumDict[x].drop(self.sets[x]['indices']) for x in self.albumDict}
+        update_results(real_dict,results)
+    def make_and_share(self):
+        self.result, self.albumIds = self.make()
+        return self.share(self.albumIds)
+    def share(self, arg:Iterable):
+        rip_body = lambda x: {'sharedAlbumOptions': x.get('create').get('album').get('shareInfo').get('sharedAlbumOptions')}
+        config = r
+        g=[]
+        for i in arg:
+            g.append(self.share_static(self.service,rip_body(config), i))
+        return g
+    @staticmethod
+    def share_static(service,body,id):
+        return service.albums().share(body=body,albumId=id).execute()
+    def make_and_share_and_rip_info(self):
+        key_get = lambda x: x.get('shareableUrl')
+        flatten = itertools.chain.from_iterable
+        self.other_result = self.make_and_share()
+        return flatten(unpack(self.other_result,key_get))
