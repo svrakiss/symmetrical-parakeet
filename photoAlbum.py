@@ -356,6 +356,7 @@ class your():
         real_dict = { x:self.albumDict[x].drop(self.sets[x]['indices']) for x in self.albumDict}
         update_results(real_dict,results)
     def make_and_share(self):
+        # it's important to store intermediate results bc more often than not something will go wrong
         self.result, self.albumIds = self.make()
         return self.share(self.albumIds)
     def share(self, arg:Iterable):
