@@ -18,6 +18,7 @@ from typing import Any, Iterable, Optional
 import re
 from imageGal import *
 import mimetypes
+import pyperclip as pp
 # @dispatch(token=str,file=str,name=str)
 def upload(token, file:str,name:str = None):
     f = open(file, 'rb').read();
@@ -348,6 +349,10 @@ class your():
             print("everything is new")
         return make_both(self.albumDict,self.sets,self.tokens)
     def update(self,results):
+        if(results is None):
+            if(self.result is None):
+                return;
+            results = self.result
         real_dict = { x:self.albumDict[x].drop(self.sets[x]['indices']) for x in self.albumDict}
         update_results(real_dict,results)
     def make_and_share(self):
@@ -364,7 +369,13 @@ class your():
     def share_static(service,body,id):
         return service.albums().share(body=body,albumId=id).execute()
     def make_and_share_and_rip_info(self):
-        key_get = lambda x: x.get('shareableUrl')
-        flatten = itertools.chain.from_iterable
+        key_get = lambda x: x.get('shareInfo').get('shareableUrl')
         self.other_result = self.make_and_share()
-        return flatten(unpack(self.other_result,key_get))
+        return unpack(self.other_result,key_get)
+    def ppcopy(self,arg):
+        pp.copy('\n'.join(arg))
+    @staticmethod
+    def make_share_copy(sheetName):
+        temp = your(sheetName);
+        temp.ppcopy(temp.make_and_share_and_rip_info());
+        return temp;
