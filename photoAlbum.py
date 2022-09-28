@@ -362,6 +362,7 @@ class your():
     def share(self, arg:Iterable):
         rip_body = lambda x: {'sharedAlbumOptions': x.get('create').get('album').get('shareInfo').get('sharedAlbumOptions')}
         config = r
+        # TODO make this a generator. (replace g.append() with yield )
         g=[]
         for i in arg:
             g.append(self.share_static(self.service,rip_body(config), i))
