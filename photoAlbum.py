@@ -346,9 +346,9 @@ class your():
     def make(self):
         self.tokens = new_items(self.albumDict,self.sets)
         if all(len(self.sets[x]['ind_array'])==0 for x in self.sets):
-            print("everything is new")
+            print("everything is old")
         return make_both(self.albumDict,self.sets,self.tokens)
-    def update(self,results):
+    def update(self,results=None):
         if(results is None):
             if(self.result is None):
                 return;
