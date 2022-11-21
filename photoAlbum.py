@@ -5,7 +5,6 @@ import sys
 import json
 from uuid import NAMESPACE_URL
 import requests
-from google_auth_oauthlib.flow import InstalledAppFlow
 from Google import Create_Service
 import pandas as pd
 import pickle
@@ -20,9 +19,9 @@ from imageGal import *
 import mimetypes
 import pyperclip as pp
 # @dispatch(token=str,file=str,name=str)
-def upload(token, file:str,name:str = None):
+def upload(token, file:str,name:str = 'None'):
     f = open(file, 'rb').read();
-    if(name is None):
+    if(name == 'None'):
         name =  os.path.basename(file)
     return upload1(token,f, name = name)
 
@@ -85,15 +84,14 @@ def createItem(token, upload_token, albumId):
 # authenticate user and build service
 f=open('albumStuff.json')
 r=json.load(f)
-CLIENTS_SECRETS_FILE=r"C:\Users\danny\Downloads\client_secret_960010643863-uavuuusnu06s5r3d69cjkalh0nt5jftn.apps.googleusercontent.com.json"
+CLIENTS_SECRETS_FILE=r"..\..\..\..\Downloads\client_secret_960010643863-uavuuusnu06s5r3d69cjkalh0nt5jftn.apps.googleusercontent.com.json"
 SCOPES = ['https://www.googleapis.com/auth/photoslibrary.sharing','https://www.googleapis.com/auth/photoslibrary.appendonly']
 API_SERVICE_NAME = 'photoslibrary'
 API_VERSION = 'v1'
 CHUNK_SIZE = 50
 
 
-EXCEL_NAMES = r"C:\Users\danny\OneDrive\Documents\code\Koikatsu Mr D\animeFinalRound.xlsx"
-RESULTS_FILE= r"C:\Users\danny\OneDrive\Documents\code\Koikatsu Mr D\pastResults.json"
+RESULTS_FILE= r".\pastResults.json"
 
 def pickle_load_token(pickle_name='token_photoslibrary_v1.pickle'):
     if(os.path.exists(pickle_name)):
@@ -122,7 +120,7 @@ def look_at_all(folder_name,token):
     return result
 
 
-def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=None)->list[dict[str:list]]:
+def make_items(service,tokens, albumId,descriptions=None, cmd=None,relative_id=None)->list[dict[str,list]]:
     # if(len(tokens)>50):
     tokens_list=np.array_split(tokens,math.ceil(len(tokens)/CHUNK_SIZE));
     if(descriptions is not None):
@@ -158,7 +156,7 @@ def make_album(service, albumName, request_body=r):
     return service.albums().create(body=request_body['create']).execute()
 
 
-def validate_names(filename=EXCEL_NAMES):
+def validate_names(filename):
 # TODO test for duplicate removal
     albumDict = pd.read_excel(filename,sheet_name=None,header=None) # All Sheets in a dict sheetname:dataframe
     for x in albumDict:
@@ -181,7 +179,7 @@ def get_pics(albumDict, token=token):
     return {x: [resultArray[y] for y in albumDict[x][albumDict[x].columns[0]] ] for x in albumDict}
 
 
-def grab_upload_tokens(service, names:dict[int | str : pd.DataFrame], token=token):
+def grab_upload_tokens(service, names:dict[int | str, pd.DataFrame], token=token):
     # false means upload your own
     # true (default) means check if the character exists before uploading a photo
     newDict = {}
@@ -222,7 +220,7 @@ def updateResults(names, service=service, token=token, results=RESULTS_FILE):
 
     return result 
 
-def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[str : list], results=RESULTS_FILE):
+def update_results(names:dict[int | str, pd.DataFrame], upload_response:dict[str , list], results=RESULTS_FILE):
     # remove names not being added before you call this method
     f = open(results)
     results_json = json.load(f)
@@ -278,7 +276,7 @@ def split_album(names, results=RESULTS_FILE)->dict:
         output[p]['ind_array']=ind_array
     return output
 
-def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dict], token=token):
+def new_items(names : dict [ int| str, pd.DataFrame], sets:dict[int | str , dict], token=token):
     # this first version is for assuming all of the items are unrelated: i.e. names chars can be in multiple albums and they
     # will be uploaded more than once.
     # decided to implement this in get_pics()
