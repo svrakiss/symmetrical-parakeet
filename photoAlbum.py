@@ -41,7 +41,7 @@ def upload1(token, f:bytes,name:str)->bytes:
     return r.content
 
 
-def uploadDownload(url,token, name=None)->str:
+def uploadDownload(url,token, name=None)->bytes:
     stuff = requests.get(url)
     if(name is None):
         name = stuff.headers['content-disposition']
@@ -243,6 +243,7 @@ def update_results(names:dict[int | str : pd.DataFrame], upload_response:dict[st
 # yes, order is very important. 
 def split_album(names, results=RESULTS_FILE)->dict:
     # TODO remove assumptions that first column is named '0'
+    # TODO remove json dependency
     f = open(results)
     results_json = json.load(f)
     output = {}
@@ -295,6 +296,7 @@ def new_items(names : dict [ int| str : pd.DataFrame], sets:dict[int | str : dic
     return tokens
 
 def make_both(names, sets, tokens, service=service,token=token, results=RESULTS_FILE):
+    # TODO remove json dependency
     result = {}
     albumIds = []
     f = open(results)
@@ -339,6 +341,7 @@ class your():
     albumIds:list
     result:Any
     other_result:Any
+    #TODO make another constructor but for scraping from the clipboard
     def __init__(self, excelFile):
         self.albumDict = validate_names(excelFile)
         self.sets = split_album(self.albumDict)
