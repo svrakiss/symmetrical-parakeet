@@ -18,6 +18,7 @@ import re
 from imageGal import *
 import mimetypes
 import pyperclip as pp
+from github_imports.profile import profile
 # @dispatch(token=str,file=str,name=str)
 def upload(token, file:str,name:str = 'None'):
     f = open(file, 'rb').read();
@@ -378,6 +379,7 @@ class your():
     def ppcopy(self,arg):
         pp.copy('\n'.join(arg))
     @staticmethod
+    @profile(sort_by='cumulative', strip_dirs=True)
     def make_share_copy(sheetName):
         temp = your(sheetName);
         temp.ppcopy(temp.make_and_share_and_rip_info());
