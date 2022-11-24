@@ -34,7 +34,7 @@ def makeSafeFilename(inputFilename):
 
 conn_str = (
     r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
-    r'DBQ=C:\Users\danny\OneDrive\Documents\code\Koikatsu Mr D\Database1.accdb;'
+    r'DBQ=.\Database1.accdb;'
     )
 cnxn = pyodbc.connect(conn_str)
 crsr = cnxn.cursor()
