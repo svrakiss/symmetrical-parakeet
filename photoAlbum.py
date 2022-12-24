@@ -1,4 +1,5 @@
 from email.mime import image
+from functools import singledispatch
 import itertools
 import re
 import sys
@@ -12,21 +13,18 @@ import os
 import numpy as np
 import glob
 import math
-from multipledispatch import dispatch
 from typing import Any, Iterable, Optional
 import re
 from imageGal import *
 import mimetypes
 import pyperclip as pp
 from github_imports.profile import profile
-# @dispatch(token=str,file=str,name=str)
 def upload(token, file:str,name:str = 'None'):
     f = open(file, 'rb').read();
     if(name == 'None'):
         name =  os.path.basename(file)
     return upload1(token,f, name = name)
 
-# @dispatch(token=str,f=bytes,name=str)
 def upload1(token, f:bytes,name:str)->bytes:
     url = 'https://photoslibrary.googleapis.com/v1/uploads'
     headers = {
@@ -157,9 +155,19 @@ def make_album(service, albumName, request_body=r):
     return service.albums().create(body=request_body['create']).execute()
 
 
-def validate_names(filename):
+@singledispatch
+def validate_names(filename:str):
 # TODO test for duplicate removal
     albumDict = pd.read_excel(filename,sheet_name=None,header=None) # All Sheets in a dict sheetname:dataframe
+    for x in albumDict:
+        for i in range(len(albumDict[x])): # doesn't make any assumptions about column name. just iterates over the first column
+            # easily replaced with albumDict[x][albumDict[x].columns[0]] which should return a list
+            if crsr.execute("SELECT 1 FROM Images WHERE Characters=?",albumDict[x].iat[i,0]).fetchone() is None:
+                print(albumDict[x].iat[i,0])
+    return {x:albumDict[x].drop_duplicates(subset=albumDict[x].columns[0]) for x in albumDict}
+
+@validate_names.register
+def _(albumDict:dict):
     for x in albumDict:
         for i in range(len(albumDict[x])): # doesn't make any assumptions about column name. just iterates over the first column
             # easily replaced with albumDict[x][albumDict[x].columns[0]] which should return a list
@@ -181,7 +189,7 @@ def get_pics(albumDict, token=token):
 
 
 def grab_upload_tokens(service, names:dict[int | str, pd.DataFrame], token=token):
-    # false means upload your own
+    # false means upload album own
     # true (default) means check if the character exists before uploading a photo
     newDict = {}
     resArray=[]
@@ -331,8 +339,8 @@ def unpack(arg:Iterable, func):
             # result needs to be an iterable ( you get this for free since generators are iterable)
 
 
-class your():
-    albumDict:dict
+class album():
+    albumDict:dict[int | str, pd.DataFrame]
     sets:dict
     tokens:dict
     service:Any
@@ -341,10 +349,18 @@ class your():
     result:Any
     other_result:Any
     #TODO make another constructor but for scraping from the clipboard
-    def __init__(self, excelFile):
+    @singledispatch
+    def __init__(self, excelFile:str):
         self.albumDict = validate_names(excelFile)
         self.sets = split_album(self.albumDict)
         self.service=service
+
+    @__init__.register
+    def _(self,albumDict:dict):
+        self.albumDict = validate_names(albumDict)
+        self.sets = split_album(self.albumDict)
+        self.service = service
+
     def make(self):
         self.tokens = new_items(self.albumDict,self.sets)
         if all(len(self.sets[x]['ind_array'])==0 for x in self.sets):
@@ -381,6 +397,6 @@ class your():
     @staticmethod
     @profile(sort_by='cumulative', strip_dirs=True)
     def make_share_copy(sheetName):
-        temp = your(sheetName);
+        temp = album(sheetName);
         temp.ppcopy(temp.make_and_share_and_rip_info());
         return temp;
