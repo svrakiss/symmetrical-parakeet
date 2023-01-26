@@ -50,7 +50,7 @@ def split(album_dict:dict[int | str , pd.DataFrame],chunk=None):
         
         sub_frames = [x.reset_index(drop=True) for x in sub_frames]
         # print(splitter(album_dict.get(v)))
-        names = (v + " " + str(index) for index in range(1,len(sub_frames)+1))
+        names = (v + " _split_" + str(index) for index in range(1,len(sub_frames)+1))
                 # type: ignore   
         result.update(dict(zip(names,sub_frames)))
     return result
