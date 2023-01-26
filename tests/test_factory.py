@@ -24,5 +24,12 @@ def test_split_album():
         .split(chunk=25)\
             .with_name("None")\
                 .build()
+    split_album_2 =factory.Builder().with_file(filename_2)\
+        .split()\
+            .with_name("None")\
+                .build()
+
     assert_frame_equal(expected_album.albumDict.get("None 1"), split_album.albumDict.get("None 1"))
     assert_frame_equal(expected_album.albumDict.get("None 2"), split_album.albumDict.get("None 2"))
+    assert_frame_equal(expected_album.albumDict.get("None 1"), split_album_2.albumDict.get("None 1"))
+    assert_frame_equal(expected_album.albumDict.get("None 2"), split_album_2.albumDict.get("None 2"))
